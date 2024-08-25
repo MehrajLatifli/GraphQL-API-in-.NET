@@ -95,6 +95,7 @@ namespace GraphQLDemo.API.Schemas
 
 
             return course;
+
         }
 
         public List<CourseResult> DeleteCourse(Guid Id)
