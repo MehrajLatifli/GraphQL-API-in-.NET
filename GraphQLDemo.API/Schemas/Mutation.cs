@@ -1,117 +1,144 @@
-﻿using GraphQLDemo.API.Models;
+﻿using GraphQLDemo.API.DTOs;
+using GraphQLDemo.API.Models;
+using GraphQLDemo.API.Services.Courses;
+using HotChocolate.Subscriptions;
 
 namespace GraphQLDemo.API.Schemas
 {
     public class Mutation
     {
-        private readonly List<CourseResult> _courses;
+        private readonly CoursesRepository _coursesRepository;
 
-        public Mutation(List<CourseResult> courses)
+        public Mutation(CoursesRepository coursesRepository)
         {
-            _courses = courses ?? new List<CourseResult>();
-
+            _coursesRepository = coursesRepository;
         }
 
-
-        public CourseResult CreateCourse(string name, Subject subject, Guid instructorId, IEnumerable<Guid> studentIds)
+        public async Task<CourseResult> CreateCourse(string name, Subject subject, [Service] ITopicEventSender topicEventSender)
         {
 
-            var course = new CourseResult
+            CourseDTO courseDTO = new CourseDTO()
             {
-                Id = Guid.NewGuid(),
+                Id = Guid.NewGuid().ToString(),
                 Name = name,
                 Subject = subject,
-                Instructor = new InstructorType()
+                Instructor = new InstructorDTO()
                 {
-                    Id = instructorId,
+                    Id = Guid.NewGuid().ToString(),
                     FirstName = "Instructor_FirstName",
                     LastName = "Instructor_LastName",
                     Salary = 10000
                 },
-                Students = new List<StudentType>()
+                Students = new List<StudentDTO>
                 {
-                    new StudentType()
+                    new StudentDTO
                     {
-                        Id=studentIds.FirstOrDefault(),
-                        FirstName = "Student_FirstName",
-                        LastName = "Student_LastName",
-                        GPA=100.0
+                        Id = Guid.NewGuid().ToString(),
+                        FirstName = "Student_FirstName1",
+                        LastName = "Student_LastName1",
+                        GPA = 100.0
                     },
-                    new StudentType()
+
+                    new StudentDTO
                     {
-                        Id=studentIds.LastOrDefault(),
-                        FirstName = "Student_FirstName",
-                        LastName = "Student_LastName",
-                        GPA=100.0
-                    }
+                        Id = Guid.NewGuid().ToString(),
+                        FirstName = "Student_FirstName2",
+                        LastName = "Student_LastName2",
+                        GPA = 100.0
+                    },
+
                 }
+
             };
 
-            _courses.Add(course);
+            var c = await _coursesRepository.Create(courseDTO);
 
-            return course;
-        }
-
-
-        public CourseResult UpdateCourse(Guid Id, string name, Subject subject, Guid instructorId, IEnumerable<Guid> studentIds)
-        {
-
-            CourseResult course = _courses.FirstOrDefault(c => c.Id == Id);
-
-            if (course == null)
+            var course = new CourseResult
             {
-                throw new GraphQLException(new Error(message: "Cource not found.", code: "404"));
-                //throw new Exception("Course not fount");
-            }
-
-
-            course.Name = name;
-            course.Subject = subject;
-            course.Instructor = new InstructorType()
-            {
-                Id = instructorId,
-                FirstName = "Instructor_FirstNameUpdated",
-                LastName = "Instructor_LastNameUpdated",
-                Salary = 10000
-            };
-            course.Students = new List<StudentType>()
-            {
-                new StudentType()
+                Id = c.Id,
+                Name = c.Name,
+                Subject = c.Subject,
+                Instructor = new InstructorType()
                 {
-                    Id=studentIds.FirstOrDefault(),
-                    FirstName = "Student_FirstNameUpdated",
-                    LastName = "Student_LastNameUpdated",
-                    GPA=100.0
+                    Id = c.InstructorId,
+                    FirstName = "Instructor_FirstName",
+                    LastName = "Instructor_LastName",
+                    Salary = 10000
                 },
-                new StudentType()
+                Students = c.Students.Select(s => new StudentType
                 {
-                    Id=studentIds.LastOrDefault(),
-                    FirstName = "Student_FirstNameUpdated",
-                    LastName = "Student_LastNameUpdated",
-                    GPA=100.0
-                }
+                    Id = s.Id,
+                    FirstName = s.FirstName,
+                    LastName = s.LastName,
+                    GPA = s.GPA
+                }).ToList()
             };
 
 
+            await  topicEventSender.SendAsync(nameof(Subscription.CourceCreate), course);
 
             return course;
-
         }
 
-        public List<CourseResult> DeleteCourse(Guid Id)
+        public async Task<CourseResult> UpdateCourse(Guid id, string name, Subject subject, [Service] ITopicEventSender topicEventSender)
         {
-            if (_courses.Where(i => i.Id == Id).Any())
+ 
+            var courseDTO = new CourseDTO
             {
+                Id = id.ToString(),
+                Name = name,
+                Subject = subject
 
+            };
 
+         
+            var updatedCourse = await _coursesRepository.Update(courseDTO);
 
-                _courses.RemoveAll(c => c.Id == Id);
-                return _courses;
-            }
-            else
+            if (updatedCourse == null)
             {
-                throw new GraphQLException(new Error(message: "Cource not found.", code: "404"));
+                throw new InvalidOperationException("Course update failed.");
             }
+
+            
+            var courseResult = new CourseResult
+            {
+                Id = updatedCourse.Id,
+                Name = updatedCourse.Name,
+                Subject = updatedCourse.Subject,
+                Instructor = updatedCourse.Instructor != null ? new InstructorType
+                {
+                    Id = updatedCourse.Instructor.Id,
+                    FirstName = updatedCourse.Instructor.FirstName ?? "Default_FirstName",
+                    LastName = updatedCourse.Instructor.LastName ?? "Default_LastName",
+                    Salary = updatedCourse.Instructor.Salary
+                } : new InstructorType
+                {
+                    Id = "Default_Id",
+                    FirstName = "Default_FirstName",
+                    LastName = "Default_LastName",
+                    Salary = 0
+                },
+                Students = (updatedCourse.Students ?? new List<StudentDTO>()).Select(s => new StudentType
+                {
+                    Id = s.Id,
+                    FirstName = s.FirstName,
+                    LastName = s.LastName,
+                    GPA = s.GPA
+                }).ToList()
+            };
+
+        
+            string courseId = $"{courseResult.Id}_{nameof(Subscription.CourseUpdate)}";
+            await topicEventSender.SendAsync(courseId, courseResult);
+
+            return courseResult;
+        }
+
+
+        public async Task<bool> DeleteCourse(Guid Id, [Service] ITopicEventSender topicEventSender)
+        {
+  
+            return await _coursesRepository.Delete(Id);
         }
     }
 }

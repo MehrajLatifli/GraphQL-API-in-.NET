@@ -9,6 +9,15 @@
   <ItemGroup>
     <PackageReference Include="HotChocolate" Version="13.9.11" />
     <PackageReference Include="HotChocolate.AspNetCore" Version="13.9.11" />
+    <PackageReference Include="HotChocolate.Data" Version="13.9.11" />
+    <PackageReference Include="HotChocolate.Data.EntityFramework" Version="13.9.11" />
+    <PackageReference Include="HotChocolate.Transport.Sockets.Client" Version="13.9.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="8.0.8" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.2" />
     <PackageReference Include="Newtonsoft.Json.Schema" Version="4.0.1" />
