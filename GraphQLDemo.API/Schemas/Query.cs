@@ -116,6 +116,7 @@ namespace GraphQLDemo.API.Schemas
             return coursetypes_;
         }
 
+
         [UseDbContext(typeof(SchoolDbContext))]
         [UsePaging(IncludeTotalCount = true, DefaultPageSize = 2)]
         [UseFiltering(typeof(CourseFilterType))]
