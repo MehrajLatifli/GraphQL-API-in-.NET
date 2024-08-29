@@ -7,12 +7,12 @@ namespace GraphQLDemo.API.DTOs
     public class CourseDTO
     {
         [Key]
-        public string Id { get; set; }
+        public Guid Id { get; set; }
         public string Name { get; set; }
 
         public Subject Subject { get; set; }
 
-        public string InstructorId { get; set; }
+        public Guid InstructorId { get; set; }
 
         [ForeignKey(nameof(InstructorId))]
         public InstructorDTO Instructor { get; set; }
@@ -23,7 +23,7 @@ namespace GraphQLDemo.API.DTOs
     public class InstructorDTO
     {
         [Key]
-        public string Id { get; set; }
+        public Guid Id { get; set; }
         public string FirstName { get; set; }
 
         public string LastName { get; set; }
@@ -36,7 +36,7 @@ namespace GraphQLDemo.API.DTOs
     public class StudentDTO
     {
         [Key]
-        public string Id { get; set; }
+        public Guid Id { get; set; }
         public string FirstName { get; set; }
 
         public string LastName { get; set; }

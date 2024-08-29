@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -14,7 +15,7 @@ namespace GraphQLDemo.API.Migrations
                 name: "Instructors",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "TEXT", nullable: false),
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     FirstName = table.Column<string>(type: "TEXT", nullable: false),
                     LastName = table.Column<string>(type: "TEXT", nullable: false),
                     Salary = table.Column<double>(type: "REAL", nullable: false)
@@ -28,7 +29,7 @@ namespace GraphQLDemo.API.Migrations
                 name: "Students",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "TEXT", nullable: false),
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     FirstName = table.Column<string>(type: "TEXT", nullable: false),
                     LastName = table.Column<string>(type: "TEXT", nullable: false),
                     GPA = table.Column<double>(type: "REAL", nullable: false)
@@ -42,10 +43,10 @@ namespace GraphQLDemo.API.Migrations
                 name: "Courses",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "TEXT", nullable: false),
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     Name = table.Column<string>(type: "TEXT", nullable: false),
                     Subject = table.Column<int>(type: "INTEGER", nullable: false),
-                    InstructorId = table.Column<string>(type: "TEXT", nullable: false)
+                    InstructorId = table.Column<Guid>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -62,8 +63,8 @@ namespace GraphQLDemo.API.Migrations
                 name: "CourseDTOStudentDTO",
                 columns: table => new
                 {
-                    CoursesId = table.Column<string>(type: "TEXT", nullable: false),
-                    StudentsId = table.Column<string>(type: "TEXT", nullable: false)
+                    CoursesId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    StudentsId = table.Column<Guid>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {

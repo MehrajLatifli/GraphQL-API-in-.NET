@@ -19,12 +19,12 @@ namespace GraphQLDemo.API.Schemas
 
             CourseDTO courseDTO = new CourseDTO()
             {
-                Id = Guid.NewGuid().ToString(),
+                Id = Guid.NewGuid(),
                 Name = name,
                 Subject = subject,
                 Instructor = new InstructorDTO()
                 {
-                    Id = Guid.NewGuid().ToString(),
+                    Id = Guid.NewGuid(),
                     FirstName = "Instructor_FirstName",
                     LastName = "Instructor_LastName",
                     Salary = 10000
@@ -33,7 +33,7 @@ namespace GraphQLDemo.API.Schemas
                 {
                     new StudentDTO
                     {
-                        Id = Guid.NewGuid().ToString(),
+                        Id = Guid.NewGuid(),
                         FirstName = "Student_FirstName1",
                         LastName = "Student_LastName1",
                         GPA = 100.0
@@ -41,7 +41,7 @@ namespace GraphQLDemo.API.Schemas
 
                     new StudentDTO
                     {
-                        Id = Guid.NewGuid().ToString(),
+                        Id = Guid.NewGuid(),
                         FirstName = "Student_FirstName2",
                         LastName = "Student_LastName2",
                         GPA = 100.0
@@ -55,7 +55,7 @@ namespace GraphQLDemo.API.Schemas
 
             var course = new CourseResult
             {
-                Id = c.Id,
+                Id = c.Id.ToString(),
                 Name = c.Name,
                 Subject = c.Subject,
                 Instructor = new InstructorType()
@@ -67,7 +67,7 @@ namespace GraphQLDemo.API.Schemas
                 },
                 Students = c.Students.Select(s => new StudentType
                 {
-                    Id = s.Id,
+                    Id = s.Id.ToString(),
                     FirstName = s.FirstName,
                     LastName = s.LastName,
                     GPA = s.GPA
@@ -85,7 +85,7 @@ namespace GraphQLDemo.API.Schemas
  
             var courseDTO = new CourseDTO
             {
-                Id = id.ToString(),
+                Id = id,
                 Name = name,
                 Subject = subject
 
@@ -102,7 +102,7 @@ namespace GraphQLDemo.API.Schemas
             
             var courseResult = new CourseResult
             {
-                Id = updatedCourse.Id,
+                Id = updatedCourse.Id.ToString(),
                 Name = updatedCourse.Name,
                 Subject = updatedCourse.Subject,
                 Instructor = updatedCourse.Instructor != null ? new InstructorType
@@ -113,14 +113,14 @@ namespace GraphQLDemo.API.Schemas
                     Salary = updatedCourse.Instructor.Salary
                 } : new InstructorType
                 {
-                    Id = "Default_Id",
+                    Id = Guid.Empty,
                     FirstName = "Default_FirstName",
                     LastName = "Default_LastName",
                     Salary = 0
                 },
                 Students = (updatedCourse.Students ?? new List<StudentDTO>()).Select(s => new StudentType
                 {
-                    Id = s.Id,
+                    Id = s.Id.ToString(),
                     FirstName = s.FirstName,
                     LastName = s.LastName,
                     GPA = s.GPA

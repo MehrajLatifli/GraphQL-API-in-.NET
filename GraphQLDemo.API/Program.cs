@@ -1,7 +1,11 @@
+using GraphQLDemo.API.DataLoaders;
+using GraphQLDemo.API.DTOs;
 using GraphQLDemo.API.Schemas;
 using GraphQLDemo.API.Services;
 using GraphQLDemo.API.Services.Courses;
+using GraphQLDemo.API.Services.Instructors;
 using HotChocolate.AspNetCore;
+using HotChocolate.Types.Pagination;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using SQLitePCL;
@@ -17,10 +21,13 @@ namespace GraphQLDemo.API
 
             // Configure GraphQL Server
             builder.Services.AddGraphQLServer()
-                .AddQueryType<Query>()
+                .AddQueryType<Query>().SetPagingOptions(new PagingOptions { MaxPageSize = int.MaxValue - 1, DefaultPageSize = int.MaxValue - 1, IncludeTotalCount = true })
                 .AddMutationType<Mutation>()
                 .AddSubscriptionType<Subscription>()
-                .AddInMemorySubscriptions();
+                .AddInMemorySubscriptions()
+                .AddFiltering();
+
+
 
             // Configure DbContext
             var configuration = builder.Configuration;
@@ -34,6 +41,8 @@ namespace GraphQLDemo.API
 
 
             builder.Services.AddScoped<CoursesRepository>();
+            builder.Services.AddScoped<InstructorRepository>();
+            builder.Services.AddScoped<InstructorDataLoader>();
 
             var app = builder.Build();
 

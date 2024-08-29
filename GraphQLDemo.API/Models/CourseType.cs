@@ -1,4 +1,7 @@
-﻿namespace GraphQLDemo.API.Models
+﻿using GraphQLDemo.API.DataLoaders;
+using GraphQLDemo.API.Services.Instructors;
+
+namespace GraphQLDemo.API.Models
 {
     public class CourseType
     {
@@ -7,18 +10,47 @@
 
         public Subject Subject { get; set; }
 
+        [GraphQLIgnore]
+        public Guid InstructorId { get; set; }
+
+
         [GraphQLNonNullType]
-        public InstructorType Instructor { get; set; }
+        public async Task <InstructorType> Instructor([Service] InstructorRepository instructorRepository)
+        {
+            var i = await instructorRepository.GetById(InstructorId);
+
+            return new InstructorType()
+            {
+                Id = i.Id,
+                FirstName = i.FirstName,
+                LastName = i.LastName,
+                Salary = i.Salary,
+
+            };
+        }
+
+        [GraphQLNonNullType]
+        public async Task<InstructorType> Instructor2([Service] InstructorDataLoader  instructorDataLoader)
+        {
+            var i = await instructorDataLoader.LoadAsync(InstructorId, cancellationToken:CancellationToken.None);
+
+            return new InstructorType()
+            {
+                Id = i.Id,
+                FirstName = i.FirstName,
+                LastName = i.LastName,
+                Salary = i.Salary,
+
+            };
+        }
 
         public IEnumerable<StudentType> Students { get; set; }
 
         public string Description()
         {
-            var student = Students.Any()
-         ? string.Join(", ", Students.Select(s => $"{s.FirstName}, {s.LastName}"))
-         : "No students enrolled";
+  
 
-            return $"Course: {Name}, {Subject};  Instructor: {Instructor.FirstName}, {Instructor.LastName};  Student: {student}";
+            return $"Course: {Name}, {Subject}";
         }
     }
 }
