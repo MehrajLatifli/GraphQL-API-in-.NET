@@ -12,36 +12,13 @@ namespace GraphQLDemo.API.DTOs
 
         public Subject Subject { get; set; }
 
+        public string CreatorId { get; set; }
+
         public Guid InstructorId { get; set; }
 
         [ForeignKey(nameof(InstructorId))]
         public InstructorDTO Instructor { get; set; }
 
         public IEnumerable<StudentDTO> Students { get; set; }
-    }
-
-    public class InstructorDTO
-    {
-        [Key]
-        public Guid Id { get; set; }
-        public string FirstName { get; set; }
-
-        public string LastName { get; set; }
-
-        public double Salary { get; set; }
-
-        public IEnumerable<CourseDTO> Courses { get; set; }
-    }
-
-    public class StudentDTO
-    {
-        [Key]
-        public Guid Id { get; set; }
-        public string FirstName { get; set; }
-
-        public string LastName { get; set; }
-        public double GPA { get; set; }
-
-        public IEnumerable<CourseDTO>  Courses { get; set; }
     }
 }

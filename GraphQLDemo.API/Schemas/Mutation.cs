@@ -1,7 +1,10 @@
-﻿using GraphQLDemo.API.DTOs;
+﻿using FirebaseAdminAuthentication.DependencyInjection.Models;
+using GraphQLDemo.API.DTOs;
 using GraphQLDemo.API.Models;
 using GraphQLDemo.API.Services.Courses;
+using HotChocolate.Authorization;
 using HotChocolate.Subscriptions;
+using System.Security.Claims;
 
 namespace GraphQLDemo.API.Schemas
 {
@@ -14,22 +17,42 @@ namespace GraphQLDemo.API.Schemas
             _coursesRepository = coursesRepository;
         }
 
-        public async Task<CourseResult> CreateCourse(string name, Subject subject, [Service] ITopicEventSender topicEventSender)
+        [Authorize(Policy ="IsAdmin")]
+        public async Task<CourseResult> CreateCourse(
+            string name, 
+            Subject subject, 
+            [Service] ITopicEventSender topicEventSender,
+            ClaimsPrincipal claimsPrincipal)
         {
+            string userId = claimsPrincipal.FindFirstValue(FirebaseUserClaimType.ID);
+            string email = claimsPrincipal.FindFirstValue(FirebaseUserClaimType.EMAIL);
+            string username = claimsPrincipal.FindFirstValue(FirebaseUserClaimType.USERNAME);
+            string verifired = claimsPrincipal.FindFirstValue(FirebaseUserClaimType.EMAIL_VERIFIED);
 
-            CourseDTO courseDTO = new CourseDTO()
+            var currentCourseDTO = _coursesRepository.GetALL().Result.Where(i=>i.CreatorId== userId).FirstOrDefault();
+
+            if (currentCourseDTO == null)
             {
-                Id = Guid.NewGuid(),
-                Name = name,
-                Subject = subject,
-                Instructor = new InstructorDTO()
+                throw new GraphQLException(new Error("You do not have permition", "403"));
+            }
+
+
+            else
+            {
+                CourseDTO courseDTO = new CourseDTO()
                 {
                     Id = Guid.NewGuid(),
-                    FirstName = "Instructor_FirstName",
-                    LastName = "Instructor_LastName",
-                    Salary = 10000
-                },
-                Students = new List<StudentDTO>
+                    Name = name,
+                    CreatorId = userId,
+                    Subject = subject,
+                    Instructor = new InstructorDTO()
+                    {
+                        Id = Guid.NewGuid(),
+                        FirstName = "Instructor_FirstName",
+                        LastName = "Instructor_LastName",
+                        Salary = 10000
+                    },
+                    Students = new List<StudentDTO>
                 {
                     new StudentDTO
                     {
@@ -49,35 +72,37 @@ namespace GraphQLDemo.API.Schemas
 
                 }
 
-            };
+                };
 
-            var c = await _coursesRepository.Create(courseDTO);
+                var c = await _coursesRepository.Create(courseDTO);
 
-            var course = new CourseResult
-            {
-                Id = c.Id.ToString(),
-                Name = c.Name,
-                Subject = c.Subject,
-                Instructor = new InstructorType()
+                var course = new CourseResult
                 {
-                    Id = c.InstructorId,
-                    FirstName = "Instructor_FirstName",
-                    LastName = "Instructor_LastName",
-                    Salary = 10000
-                },
-                Students = c.Students.Select(s => new StudentType
-                {
-                    Id = s.Id.ToString(),
-                    FirstName = s.FirstName,
-                    LastName = s.LastName,
-                    GPA = s.GPA
-                }).ToList()
-            };
+                    Id = c.Id.ToString(),
+                    Name = c.Name,
+                    Subject = c.Subject,
+                    CreatorId = c.CreatorId,
+                    Instructor = new InstructorType()
+                    {
+                        Id = c.InstructorId.ToString(),
+                        FirstName = "Instructor_FirstName",
+                        LastName = "Instructor_LastName",
+                        Salary = 10000
+                    },
+                    Students = c.Students.Select(s => new StudentType
+                    {
+                        Id = s.Id.ToString(),
+                        FirstName = s.FirstName,
+                        LastName = s.LastName,
+                        GPA = s.GPA
+                    }).ToList()
+                };
 
 
-            await  topicEventSender.SendAsync(nameof(Subscription.CourceCreate), course);
+                await topicEventSender.SendAsync(nameof(Subscription.CourceCreate), course);
 
-            return course;
+                return course;
+            }
         }
 
         public async Task<CourseResult> UpdateCourse(Guid id, string name, Subject subject, [Service] ITopicEventSender topicEventSender)
@@ -107,13 +132,13 @@ namespace GraphQLDemo.API.Schemas
                 Subject = updatedCourse.Subject,
                 Instructor = updatedCourse.Instructor != null ? new InstructorType
                 {
-                    Id = updatedCourse.Instructor.Id,
+                    Id = updatedCourse.Instructor.Id.ToString(),
                     FirstName = updatedCourse.Instructor.FirstName ?? "Default_FirstName",
                     LastName = updatedCourse.Instructor.LastName ?? "Default_LastName",
                     Salary = updatedCourse.Instructor.Salary
                 } : new InstructorType
                 {
-                    Id = Guid.Empty,
+                    Id = string.Empty,
                     FirstName = "Default_FirstName",
                     LastName = "Default_LastName",
                     Salary = 0

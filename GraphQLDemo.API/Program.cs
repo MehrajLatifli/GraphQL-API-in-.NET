@@ -1,10 +1,15 @@
+using FirebaseAdmin;
+using FirebaseAdminAuthentication.DependencyInjection.Extensions;
+using FirebaseAdminAuthentication.DependencyInjection.Models;
 using GraphQLDemo.API.DataLoaders;
 using GraphQLDemo.API.DTOs;
+using GraphQLDemo.API.Models;
 using GraphQLDemo.API.Schemas;
 using GraphQLDemo.API.Services;
 using GraphQLDemo.API.Services.Courses;
 using GraphQLDemo.API.Services.Instructors;
 using HotChocolate.AspNetCore;
+using HotChocolate.Types.Introspection;
 using HotChocolate.Types.Pagination;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -25,7 +30,13 @@ namespace GraphQLDemo.API
                 .AddMutationType<Mutation>()
                 .AddSubscriptionType<Subscription>()
                 .AddInMemorySubscriptions()
-                .AddFiltering();
+                .AddFiltering()
+                .AddSorting()
+                .AddProjections()
+                .AddAuthorization()
+                .AddType<CourseType>()
+                .AddType<InstructorType>()
+                .AddTypeExtension<ExtendingQuery>();
 
 
 
@@ -38,6 +49,12 @@ namespace GraphQLDemo.API
             // Add services to the container.
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
+        
+
+            builder.Services.AddAuthorization(o=>o.AddPolicy("IsAdmin", p=>p.RequireClaim(FirebaseUserClaimType.EMAIL)));
+
+            builder.Services.AddSingleton(FirebaseApp.Create());
+            builder.Services.AddFirebaseAuthentication();
 
 
             builder.Services.AddScoped<CoursesRepository>();
@@ -56,6 +73,7 @@ namespace GraphQLDemo.API
             app.UseAuthorization();
             app.UseRouting();
             app.UseWebSockets();
+            app.UseAuthentication();
 
             app.UseEndpoints(endpoints =>
             {
