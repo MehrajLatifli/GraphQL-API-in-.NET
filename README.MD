@@ -17,7 +17,7 @@ https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=api_ke
 <br/>
 
 {
-    "email":"admin1234@admin1234.com",
-    "password":"admin1234",
+    "email":"email@email.com",
+    "password":"password",
     "returnSecureToken":true
 }
