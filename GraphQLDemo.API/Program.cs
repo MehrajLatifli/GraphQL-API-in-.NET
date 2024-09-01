@@ -1,6 +1,8 @@
+using AppAny.HotChocolate.FluentValidation;
 using FirebaseAdmin;
 using FirebaseAdminAuthentication.DependencyInjection.Extensions;
 using FirebaseAdminAuthentication.DependencyInjection.Models;
+using FluentValidation.AspNetCore;
 using GraphQLDemo.API.DataLoaders;
 using GraphQLDemo.API.DTOs;
 using GraphQLDemo.API.Models;
@@ -8,6 +10,7 @@ using GraphQLDemo.API.Schemas;
 using GraphQLDemo.API.Services;
 using GraphQLDemo.API.Services.Courses;
 using GraphQLDemo.API.Services.Instructors;
+using GraphQLDemo.API.Validators;
 using HotChocolate.AspNetCore;
 using HotChocolate.Types.Introspection;
 using HotChocolate.Types.Pagination;
@@ -36,7 +39,14 @@ namespace GraphQLDemo.API
                 .AddAuthorization()
                 .AddType<CourseType>()
                 .AddType<InstructorType>()
-                .AddTypeExtension<ExtendingQuery>();
+                .AddTypeExtension<ExtendingQuery>()
+                .AddFluentValidation(o=>o.UseDefaultErrorMapper());
+
+
+            // Configure FluentValidation
+            builder.Services.AddFluentValidation();
+
+            builder.Services.AddTransient<CourseTypeInputValidation>();
 
 
 

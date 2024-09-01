@@ -1,7 +1,10 @@
-﻿using FirebaseAdminAuthentication.DependencyInjection.Models;
+﻿using AppAny.HotChocolate.FluentValidation;
+using FirebaseAdminAuthentication.DependencyInjection.Models;
 using GraphQLDemo.API.DTOs;
+using GraphQLDemo.API.Middlewares.UseUser;
 using GraphQLDemo.API.Models;
 using GraphQLDemo.API.Services.Courses;
+using GraphQLDemo.API.Validators;
 using HotChocolate.Authorization;
 using HotChocolate.Subscriptions;
 using System.Security.Claims;
@@ -11,25 +14,26 @@ namespace GraphQLDemo.API.Schemas
     public class Mutation
     {
         private readonly CoursesRepository _coursesRepository;
+        private readonly CourseTypeInputValidation _validationRules;
 
-        public Mutation(CoursesRepository coursesRepository)
+        public Mutation(CoursesRepository coursesRepository, CourseTypeInputValidation validationRules)
         {
             _coursesRepository = coursesRepository;
+            _validationRules = validationRules;
         }
 
         [Authorize(Policy ="IsAdmin")]
-        public async Task<CourseResult> CreateCourse(
-            string name, 
-            Subject subject, 
-            [Service] ITopicEventSender topicEventSender,
-            ClaimsPrincipal claimsPrincipal)
+        [UseUser]
+        public async Task<CourseResult> CreateCourse(CourseTypeInput courseTypeInput , [Service] ITopicEventSender topicEventSender, [User] User user)
         {
-            string userId = claimsPrincipal.FindFirstValue(FirebaseUserClaimType.ID);
-            string email = claimsPrincipal.FindFirstValue(FirebaseUserClaimType.EMAIL);
-            string username = claimsPrincipal.FindFirstValue(FirebaseUserClaimType.USERNAME);
-            string verifired = claimsPrincipal.FindFirstValue(FirebaseUserClaimType.EMAIL_VERIFIED);
+            await Validate(courseTypeInput);
 
-            var currentCourseDTO = _coursesRepository.GetALL().Result.Where(i=>i.CreatorId== userId).FirstOrDefault();
+            string userId = user.Id;
+            string email = user.Email;
+            string username = user.Username;
+            bool verifired = user.EmailVerified;
+
+            var currentCourseDTO = _coursesRepository.GetALL().Result.Where(i => i.CreatorId == userId).FirstOrDefault();
 
             if (currentCourseDTO == null)
             {
@@ -42,9 +46,9 @@ namespace GraphQLDemo.API.Schemas
                 CourseDTO courseDTO = new CourseDTO()
                 {
                     Id = Guid.NewGuid(),
-                    Name = name,
+                    Name = courseTypeInput.Name,
                     CreatorId = userId,
-                    Subject = subject,
+                    Subject = courseTypeInput.Subject,
                     Instructor = new InstructorDTO()
                     {
                         Id = Guid.NewGuid(),
@@ -105,14 +109,26 @@ namespace GraphQLDemo.API.Schemas
             }
         }
 
-        public async Task<CourseResult> UpdateCourse(Guid id, string name, Subject subject, [Service] ITopicEventSender topicEventSender)
+        private async Task Validate(CourseTypeInput courseTypeInput)
         {
- 
+            var validationresult = await _validationRules.ValidateAsync(courseTypeInput);
+
+            if (!validationresult.IsValid)
+            {
+                throw new GraphQLException(new Error("Invalid input", "422"));
+            }
+        }
+
+
+        public async Task<CourseResult> UpdateCourse(Guid id, [UseFluentValidation, UseValidator<CourseTypeInputValidation>] CourseTypeInput courseTypeInput, [Service] ITopicEventSender topicEventSender)
+        {
+     
+
             var courseDTO = new CourseDTO
             {
                 Id = id,
-                Name = name,
-                Subject = subject
+                Name = courseTypeInput.Name,
+                Subject = courseTypeInput.Subject
 
             };
 
